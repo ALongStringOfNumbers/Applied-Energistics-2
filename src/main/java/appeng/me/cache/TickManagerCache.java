@@ -19,9 +19,9 @@
 package appeng.me.cache;
 
 
-import java.util.HashMap;
-import java.util.PriorityQueue;
+import java.util.*;
 
+import appeng.parts.automation.PartLevelEmitter;
 import com.google.common.base.Preconditions;
 
 import net.minecraft.crash.CrashReport;
@@ -46,6 +46,7 @@ public class TickManagerCache implements ITickManager
 	private final HashMap<IGridNode, TickTracker> alertable = new HashMap<>();
 	private final HashMap<IGridNode, TickTracker> sleeping = new HashMap<>();
 	private final HashMap<IGridNode, TickTracker> awake = new HashMap<>();
+	private final HashMap<IGridNode, TickTracker> laterTicker = new HashMap<>();
 	private final PriorityQueue<TickTracker> upcomingTicks = new PriorityQueue<>();
 
 	private long currentTick = 0;
@@ -126,8 +127,17 @@ public class TickManagerCache implements ITickManager
 
 				if( this.awake.containsKey( tt.getNode() ) )
 				{
+					if (tt.getNode() instanceof PartLevelEmitter ) {
+						laterTicker.put( tt.getNode(), tt );
+					}
 					this.addToQueue( tt );
 				}
+			}
+			Iterator<Map.Entry<IGridNode, TickTracker>> ltIterator = laterTicker.entrySet().iterator();
+			while (ltIterator.hasNext()){
+				Map.Entry<IGridNode, TickTracker> tickTracker = ltIterator.next();
+				this.addToQueue( tickTracker.getValue() );
+				ltIterator.remove();
 			}
 		}
 		catch( final Throwable t )
